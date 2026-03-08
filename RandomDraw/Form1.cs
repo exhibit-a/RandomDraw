@@ -37,6 +37,9 @@ namespace RandomDraw
             }
 
             cn.Close();
+            
+            // Disable pick winner button at startup
+            btnPick.Enabled = false;
         }
 
         private void btnAssign_Click(object sender, EventArgs e)
@@ -140,13 +143,20 @@ namespace RandomDraw
         {
             this.timer1.Stop();
             drawDataSet.DrawRow dr = this.drawDataSet1.Draw.Select("RandomID=" + lblRandomNumber.Text).First() as drawDataSet.DrawRow;
-            this.winnersTableAdapter1.InsertWinner(dr.ID, dr.NameSurname, dr.EmplNo.ToString(), dr.RandomID, dr.Region);
+            string region = dr.IsRegionNull() ? "" : dr.Region;
+            this.winnersTableAdapter1.InsertWinner(dr.ID, dr.NameSurname, dr.EmplNo.ToString(), dr.RandomID, region);
             this.winnersTableAdapter1.Fill(this.drawDataSet1.Winners);
+            
+            // Disable pick button after picking a winner
+            btnPick.Enabled = false;
         }
 
         private void btnStart_Click(object sender, EventArgs e)
         {
             this.timer1.Start();
+            
+            // Enable pick button when starting number generator
+            btnPick.Enabled = true;
         }
 
         private void timer1_Tick(object sender, EventArgs e)
