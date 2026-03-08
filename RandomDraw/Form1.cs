@@ -2,8 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace RandomDraw
@@ -171,6 +174,13 @@ namespace RandomDraw
 
                     completed++;
 
+                    // Update reel display with current random number
+                    string rndStr = pair.Rnd.ToString().PadLeft(5, '0');
+                    for (int i = 0; i < 5; i++)
+                    {
+                        reelLabels[i].Text = rndStr[i].ToString();
+                    }
+
                     // Update UI directly (we are on the UI thread)
                     if (completed <= this.progressBar1.Maximum)
                     {
@@ -212,11 +222,12 @@ namespace RandomDraw
             DataRow dr = matches[0];
             string region = dr["Region"]?.ToString() ?? "";
             int id = Convert.ToInt32(dr["ID"]);
-            string nameSurname = dr["NameSurname"]?.ToString() ?? "";
-            string emplNo = dr["EmplNo"]?.ToString() ?? "";
+            string fullName = dr[ExcelHelper.FullNameColumn]?.ToString() ?? "";
+            string emplNo = dr[ExcelHelper.EmployeeNumberColumn]?.ToString() ?? "";
+            int randomId = Convert.ToInt32(fullNumber);
 
             // Insert winner into the Excel Winners sheet
-            ExcelHelper.InsertWinner(region, id, nameSurname, emplNo);
+            ExcelHelper.InsertWinner(region, id, fullName, emplNo, randomId);
 
             // Refresh winners grid
             RefreshWinnersGrid();
@@ -284,7 +295,55 @@ namespace RandomDraw
 
         private void btnPrint_Click(object sender, EventArgs e)
         {
+            if (winnersTable.Rows.Count == 0)
+            {
+                MessageBox.Show("No winners to print.", "Print Winners", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
+            var sb = new StringBuilder();
+            sb.AppendLine("<!DOCTYPE html>");
+            sb.AppendLine("<html><head><meta charset='utf-8'>");
+            sb.AppendLine("<title>Random Draw - Winners</title>");
+            sb.AppendLine("<style>");
+            sb.AppendLine("  body { font-family: Arial, sans-serif; margin: 40px; }");
+            sb.AppendLine("  h1 { color: #333; }");
+            sb.AppendLine("  table { border-collapse: collapse; width: 100%; }");
+            sb.AppendLine("  th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }");
+            sb.AppendLine("  th { background-color: #4CAF50; color: white; }");
+            sb.AppendLine("  tr:nth-child(even) { background-color: #f2f2f2; }");
+            sb.AppendLine("</style>");
+            sb.AppendLine("</head><body>");
+            sb.AppendLine("<h1>Random Draw - Winners</h1>");
+            sb.AppendLine("<table>");
+
+            // Header row from the DataTable columns
+            sb.AppendLine("<tr>");
+            foreach (DataColumn col in winnersTable.Columns)
+            {
+                sb.AppendLine($"  <th>{System.Net.WebUtility.HtmlEncode(col.ColumnName)}</th>");
+            }
+            sb.AppendLine("</tr>");
+
+            // Data rows
+            foreach (DataRow row in winnersTable.Rows)
+            {
+                sb.AppendLine("<tr>");
+                foreach (DataColumn col in winnersTable.Columns)
+                {
+                    var value = row[col]?.ToString() ?? "";
+                    sb.AppendLine($"  <td>{System.Net.WebUtility.HtmlEncode(value)}</td>");
+                }
+                sb.AppendLine("</tr>");
+            }
+
+            sb.AppendLine("</table>");
+            sb.AppendLine("</body></html>");
+
+            var htmlPath = Path.Combine(Path.GetTempPath(), "RandomDraw_Winners.html");
+            File.WriteAllText(htmlPath, sb.ToString(), Encoding.UTF8);
+
+            Process.Start(new ProcessStartInfo(htmlPath) { UseShellExecute = true });
         }
 
         private void cbRegion_SelectedIndexChanged(object sender, EventArgs e)
@@ -302,3 +361,4 @@ namespace RandomDraw
 
     }
 }
+

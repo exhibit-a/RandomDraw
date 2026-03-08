@@ -4,14 +4,46 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Packaging;
 
 namespace RandomDraw
 {
     internal static class ExcelHelper
     {
-        public const string FilePath = @"c:\temp\list.xlsx";
+        private static readonly Lazy<string?> _filePath = new(() =>
+            Directory.GetFiles(AppContext.BaseDirectory, "*.xlsx")
+                     .FirstOrDefault());
+
+        public static string? FilePath => _filePath.Value;
+
         private const string WinnersSheetName = "Winners";
+
+        // Configurable column names loaded from appsettings.json
+        public static string FullNameColumn { get; private set; } = "FullName";
+        public static string EmployeeNumberColumn { get; private set; } = "Employee_Num";
+
+        static ExcelHelper()
+        {
+            var configPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+            if (File.Exists(configPath))
+            {
+                try
+                {
+                    var json = File.ReadAllText(configPath);
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("ColumnNames", out var colNames))
+                    {
+                        if (colNames.TryGetProperty("FullName", out var fn) && fn.GetString() is string fnVal)
+                            FullNameColumn = fnVal;
+                        if (colNames.TryGetProperty("EmployeeNumber", out var en) && en.GetString() is string enVal)
+                            EmployeeNumberColumn = enVal;
+                    }
+                }
+                catch { /* use defaults if config is invalid */ }
+            }
+        }
 
         /// <summary>
         /// Returns the first visible (non-hidden) worksheet in the workbook,
@@ -24,7 +56,7 @@ namespace RandomDraw
                 !s.Name.Equals(WinnersSheetName, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static readonly string[] RequiredColumns = { "NameSurname", "EmplNo" };
+        private static string[] RequiredColumns => new[] { FullNameColumn, EmployeeNumberColumn };
         private static readonly string[] OptionalColumns = { "Region" };
         private static readonly string[] ManagedColumns = { "ID", "RandomID" };
 
@@ -34,8 +66,14 @@ namespace RandomDraw
         /// </summary>
         public static string? ValidateAndPrepare()
         {
+            if (FilePath == null)
+                return $"No .xlsx file found in {AppContext.BaseDirectory}";
+
             if (!File.Exists(FilePath))
                 return $"Excel file not found: {FilePath}";
+
+            // Normalize namespace declarations so ClosedXML can parse the file
+            RepairXlsx(FilePath);
 
             using var wb = new XLWorkbook(FilePath);
 
@@ -118,9 +156,30 @@ namespace RandomDraw
                 var winnersWs = wb.Worksheets.Add(WinnersSheetName);
                 winnersWs.Cell(1, 1).Value = "Region";
                 winnersWs.Cell(1, 2).Value = "ID";
-                winnersWs.Cell(1, 3).Value = "NameSurname";
-                winnersWs.Cell(1, 4).Value = "EmplNo";
+                winnersWs.Cell(1, 3).Value = FullNameColumn;
+                winnersWs.Cell(1, 4).Value = EmployeeNumberColumn;
+                winnersWs.Cell(1, 5).Value = "RandomID";
                 changed = true;
+            }
+            else
+            {
+                // Ensure existing Winners sheet has the RandomID column
+                var winnersWs = wb.Worksheets.First(s => s.Name.Equals(WinnersSheetName, StringComparison.OrdinalIgnoreCase));
+                var lastWinCol = winnersWs.LastColumnUsed()?.ColumnNumber() ?? 0;
+                bool hasRandomId = false;
+                for (int c = 1; c <= lastWinCol; c++)
+                {
+                    if (winnersWs.Cell(1, c).GetString().Trim().Equals("RandomID", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasRandomId = true;
+                        break;
+                    }
+                }
+                if (!hasRandomId)
+                {
+                    winnersWs.Cell(1, lastWinCol + 1).Value = "RandomID";
+                    changed = true;
+                }
             }
 
             if (changed)
@@ -266,8 +325,9 @@ namespace RandomDraw
                 var dt = new DataTable("Winners");
                 dt.Columns.Add("Region", typeof(string));
                 dt.Columns.Add("ID", typeof(int));
-                dt.Columns.Add("NameSurname", typeof(string));
-                dt.Columns.Add("EmplNo", typeof(string));
+                dt.Columns.Add(FullNameColumn, typeof(string));
+                dt.Columns.Add(EmployeeNumberColumn, typeof(string));
+                dt.Columns.Add("RandomID", typeof(int));
                 return dt;
             }
             return ReadSheetToDataTable(ws);
@@ -276,7 +336,7 @@ namespace RandomDraw
         /// <summary>
         /// Inserts a winner row into the Winners sheet and saves.
         /// </summary>
-        public static void InsertWinner(string region, int id, string nameSurname, string emplNo)
+        public static void InsertWinner(string region, int id, string nameSurname, string emplNo, int randomId)
         {
             using var wb = new XLWorkbook(FilePath);
             var ws = wb.Worksheets.First(s => s.Name.Equals(WinnersSheetName, StringComparison.OrdinalIgnoreCase));
@@ -287,6 +347,7 @@ namespace RandomDraw
             ws.Cell(newRow, 2).Value = id;
             ws.Cell(newRow, 3).Value = nameSurname;
             ws.Cell(newRow, 4).Value = emplNo;
+            ws.Cell(newRow, 5).Value = randomId;
             wb.Save();
         }
 
@@ -353,5 +414,16 @@ namespace RandomDraw
 
             return dt;
         }
+
+        /// <summary>
+        /// Opens and re-saves the xlsx with Open XML SDK to normalize
+        /// namespace declarations that ClosedXML cannot parse.
+        /// </summary>
+        public static void RepairXlsx(string filePath)
+        {
+            using var doc = SpreadsheetDocument.Open(filePath, true);
+            doc.Save();
+        }
     }
 }
+
