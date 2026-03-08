@@ -3,24 +3,12 @@
   "WorkspaceRootPath": "D:\\Work\\Development\\GitHub\\RandomDraw\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}|Solution Items{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}|D:\\Work\\Development\\GitHub\\RandomDraw\\.nojekyll||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}|Solution Items{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}|solutionrelative:.nojekyll||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{26F4EE59-B269-4DD9-92FF-7E3B1D3C3EF4}|RandomDraw\\RandomDraw.csproj|d:\\work\\development\\github\\randomdraw\\randomdraw\\excelservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{26F4EE59-B269-4DD9-92FF-7E3B1D3C3EF4}|RandomDraw\\RandomDraw.csproj|solutionrelative:randomdraw\\excelservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}|Solution Items{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}|D:\\Work\\Development\\GitHub\\RandomDraw\\index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}|Solution Items{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}|solutionrelative:index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4BF036B8-EAC5-43F3-9F34-9D294C2EE5B0}|NewFolder1{4BF036B8-EAC5-43F3-9F34-9D294C2EE5B0}|D:\\Work\\Development\\GitHub\\RandomDraw\\js\\interop.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{4BF036B8-EAC5-43F3-9F34-9D294C2EE5B0}|NewFolder1{4BF036B8-EAC5-43F3-9F34-9D294C2EE5B0}|solutionrelative:js\\interop.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B68B71E8-40B5-499D-91C9-4F225A96B81F}|NewFolder1{B68B71E8-40B5-499D-91C9-4F225A96B81F}|D:\\Work\\Development\\GitHub\\RandomDraw\\css\\app.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
-      "RelativeMoniker": "D:0:0:{B68B71E8-40B5-499D-91C9-4F225A96B81F}|NewFolder1{B68B71E8-40B5-499D-91C9-4F225A96B81F}|solutionrelative:css\\app.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Work\\Development\\GitHub\\RandomDraw\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
+      "AbsoluteMoniker": "D:0:0:{26F4EE59-B269-4DD9-92FF-7E3B1D3C3EF4}|RandomDraw\\RandomDraw.csproj|d:\\work\\development\\github\\randomdraw\\randomdraw\\pages\\drawpage.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{26F4EE59-B269-4DD9-92FF-7E3B1D3C3EF4}|RandomDraw\\RandomDraw.csproj|solutionrelative:randomdraw\\pages\\drawpage.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     }
   ],
   "DocumentGroupContainers": [
@@ -30,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -38,67 +26,28 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": ".nojekyll",
-              "DocumentMoniker": "D:\\Work\\Development\\GitHub\\RandomDraw\\.nojekyll",
-              "RelativeDocumentMoniker": ".nojekyll",
-              "ToolTip": "D:\\Work\\Development\\GitHub\\RandomDraw\\.nojekyll",
-              "RelativeToolTip": ".nojekyll",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-03-08T23:22:14.659Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": ".gitignore",
-              "DocumentMoniker": "D:\\Work\\Development\\GitHub\\RandomDraw\\.gitignore",
-              "RelativeDocumentMoniker": ".gitignore",
-              "ToolTip": "D:\\Work\\Development\\GitHub\\RandomDraw\\.gitignore",
-              "RelativeToolTip": ".gitignore",
-              "ViewState": "AgIAAIMBAAAAAAAAAABBwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-03-08T23:08:34.889Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "index.html",
-              "DocumentMoniker": "D:\\Work\\Development\\GitHub\\RandomDraw\\index.html",
-              "RelativeDocumentMoniker": "index.html",
-              "ToolTip": "D:\\Work\\Development\\GitHub\\RandomDraw\\index.html",
-              "RelativeToolTip": "index.html",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAARAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
-              "WhenOpened": "2026-03-08T23:03:02.051Z",
+              "Title": "DrawPage.razor",
+              "DocumentMoniker": "D:\\Work\\Development\\GitHub\\RandomDraw\\RandomDraw\\Pages\\DrawPage.razor",
+              "RelativeDocumentMoniker": "RandomDraw\\Pages\\DrawPage.razor",
+              "ToolTip": "D:\\Work\\Development\\GitHub\\RandomDraw\\RandomDraw\\Pages\\DrawPage.razor",
+              "RelativeToolTip": "RandomDraw\\Pages\\DrawPage.razor",
+              "ViewState": "AgIAAFsBAAAAAAAAAIBJwKYBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-03-08T23:39:55.283Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "interop.js",
-              "DocumentMoniker": "D:\\Work\\Development\\GitHub\\RandomDraw\\js\\interop.js",
-              "RelativeDocumentMoniker": "js\\interop.js",
-              "ToolTip": "D:\\Work\\Development\\GitHub\\RandomDraw\\js\\interop.js",
-              "RelativeToolTip": "js\\interop.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-03-08T23:02:53.219Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "app.css",
-              "DocumentMoniker": "D:\\Work\\Development\\GitHub\\RandomDraw\\css\\app.css",
-              "RelativeDocumentMoniker": "css\\app.css",
-              "ToolTip": "D:\\Work\\Development\\GitHub\\RandomDraw\\css\\app.css",
-              "RelativeToolTip": "css\\app.css",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
-              "WhenOpened": "2026-03-08T23:02:41.163Z",
+              "DocumentIndex": 0,
+              "Title": "ExcelService.cs",
+              "DocumentMoniker": "D:\\Work\\Development\\GitHub\\RandomDraw\\RandomDraw\\ExcelService.cs",
+              "RelativeDocumentMoniker": "RandomDraw\\ExcelService.cs",
+              "ToolTip": "D:\\Work\\Development\\GitHub\\RandomDraw\\RandomDraw\\ExcelService.cs",
+              "RelativeToolTip": "RandomDraw\\ExcelService.cs",
+              "ViewState": "AgIAAJ8BAAAAAAAAAAAgwKkBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-08T23:33:43.956Z",
               "EditorCaption": ""
             }
           ]
