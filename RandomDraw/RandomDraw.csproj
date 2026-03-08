@@ -21,10 +21,6 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
-    <ManifestCertificateThumbprint>38F9B1D7189C6E5C2DCA20F8B9B0DD1C281C53D2</ManifestCertificateThumbprint>
-    <ManifestKeyFile>RandomDraw_4_TemporaryKey.pfx</ManifestKeyFile>
-    <GenerateManifests>true</GenerateManifests>
-    <SignManifests>true</SignManifests>
   </PropertyGroup>
   <ItemGroup>
     <Compile Update="drawDataSet.cs">
@@ -71,5 +67,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.3" />
+    <PackageReference Include="System.Data.OleDb" Version="10.0.3" />
   </ItemGroup>
 </Project>
