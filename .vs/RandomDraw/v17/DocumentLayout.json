@@ -1,12 +1,7 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\Work\\Development\\GitHub\\RandomDraw\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{26F4EE59-B269-4DD9-92FF-7E3B1D3C3EF4}|RandomDraw\\RandomDraw.csproj|d:\\work\\development\\github\\randomdraw\\randomdraw\\pages\\drawpage.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{26F4EE59-B269-4DD9-92FF-7E3B1D3C3EF4}|RandomDraw\\RandomDraw.csproj|solutionrelative:randomdraw\\pages\\drawpage.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    }
-  ],
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -14,20 +9,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": -1,
           "Children": [
             {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "DrawPage.razor",
-              "DocumentMoniker": "D:\\Work\\Development\\GitHub\\RandomDraw\\RandomDraw\\Pages\\DrawPage.razor",
-              "RelativeDocumentMoniker": "RandomDraw\\Pages\\DrawPage.razor",
-              "ToolTip": "D:\\Work\\Development\\GitHub\\RandomDraw\\RandomDraw\\Pages\\DrawPage.razor",
-              "RelativeToolTip": "RandomDraw\\Pages\\DrawPage.razor",
-              "ViewState": "AgIAAF0AAAAAAAAAAAAAABAAAABHAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-03-08T21:19:45.091Z",
-              "EditorCaption": ""
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
             }
           ]
         }
