@@ -1,0 +1,262 @@
+﻿namespace RandomDraw
+{
+    partial class frmDraw
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            components = new System.ComponentModel.Container();
+            label1 = new System.Windows.Forms.Label();
+            btnAssign = new System.Windows.Forms.Button();
+            btnPick = new System.Windows.Forms.Button();
+            btnPrint = new System.Windows.Forms.Button();
+            progressBar1 = new System.Windows.Forms.ProgressBar();
+            lblProgress = new System.Windows.Forms.Label();
+            lblRandomNumber = new System.Windows.Forms.Label();
+            btnStart = new System.Windows.Forms.Button();
+            timer1 = new System.Windows.Forms.Timer(components);
+            cbRegion = new System.Windows.Forms.ComboBox();
+            label2 = new System.Windows.Forms.Label();
+            dgWinners = new System.Windows.Forms.DataGridView();
+            dgDraw = new System.Windows.Forms.DataGridView();
+            btnClear = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)dgWinners).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgDraw).BeginInit();
+            SuspendLayout();
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            label1.Location = new System.Drawing.Point(14, 330);
+            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(66, 13);
+            label1.TabIndex = 1;
+            label1.Text = "WINNERS";
+            // 
+            // btnAssign
+            // 
+            btnAssign.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btnAssign.AutoSize = true;
+            btnAssign.BackColor = System.Drawing.Color.LimeGreen;
+            btnAssign.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnAssign.Location = new System.Drawing.Point(734, 512);
+            btnAssign.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btnAssign.Name = "btnAssign";
+            btnAssign.Size = new System.Drawing.Size(282, 27);
+            btnAssign.TabIndex = 2;
+            btnAssign.Text = "2. ASSIGN RANDOM NUMBERS";
+            btnAssign.UseVisualStyleBackColor = false;
+            btnAssign.Click += btnAssign_Click;
+            // 
+            // btnPick
+            // 
+            btnPick.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btnPick.AutoSize = true;
+            btnPick.BackColor = System.Drawing.Color.Yellow;
+            btnPick.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnPick.Location = new System.Drawing.Point(1023, 513);
+            btnPick.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btnPick.Name = "btnPick";
+            btnPick.Size = new System.Drawing.Size(140, 27);
+            btnPick.TabIndex = 4;
+            btnPick.Text = "4. PICK WINNER";
+            btnPick.UseVisualStyleBackColor = false;
+            btnPick.Click += btnPick_Click;
+            // 
+            // btnPrint
+            // 
+            btnPrint.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btnPrint.AutoSize = true;
+            btnPrint.BackColor = System.Drawing.Color.DarkOrange;
+            btnPrint.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnPrint.Location = new System.Drawing.Point(1023, 545);
+            btnPrint.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btnPrint.Name = "btnPrint";
+            btnPrint.Size = new System.Drawing.Size(140, 27);
+            btnPrint.TabIndex = 5;
+            btnPrint.Text = "5. PRINT WINNERS";
+            btnPrint.UseVisualStyleBackColor = false;
+            btnPrint.Click += btnPrint_Click;
+            // 
+            // progressBar1
+            // 
+            progressBar1.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            progressBar1.Location = new System.Drawing.Point(209, 512);
+            progressBar1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar1.Name = "progressBar1";
+            progressBar1.Size = new System.Drawing.Size(117, 27);
+            progressBar1.TabIndex = 6;
+            // 
+            // lblProgress
+            // 
+            lblProgress.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            lblProgress.Location = new System.Drawing.Point(15, 518);
+            lblProgress.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lblProgress.Name = "lblProgress";
+            lblProgress.Size = new System.Drawing.Size(187, 16);
+            lblProgress.TabIndex = 7;
+            lblProgress.Text = "PROGRESS";
+            // 
+            // lblRandomNumber
+            // 
+            lblRandomNumber.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            lblRandomNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            lblRandomNumber.Location = new System.Drawing.Point(14, 584);
+            lblRandomNumber.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lblRandomNumber.Name = "lblRandomNumber";
+            lblRandomNumber.Size = new System.Drawing.Size(64, 23);
+            lblRandomNumber.TabIndex = 8;
+            lblRandomNumber.Text = "RND";
+            // 
+            // btnStart
+            // 
+            btnStart.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btnStart.AutoSize = true;
+            btnStart.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            btnStart.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnStart.Location = new System.Drawing.Point(734, 545);
+            btnStart.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btnStart.Name = "btnStart";
+            btnStart.Size = new System.Drawing.Size(282, 27);
+            btnStart.TabIndex = 9;
+            btnStart.Text = "3. START NUMBER GENERATOR";
+            btnStart.UseVisualStyleBackColor = false;
+            btnStart.Click += btnStart_Click;
+            // 
+            // timer1
+            // 
+            timer1.Tick += timer1_Tick;
+            // 
+            // cbRegion
+            // 
+            cbRegion.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            cbRegion.FormattingEnabled = true;
+            cbRegion.Location = new System.Drawing.Point(556, 515);
+            cbRegion.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            cbRegion.Name = "cbRegion";
+            cbRegion.Size = new System.Drawing.Size(170, 23);
+            cbRegion.TabIndex = 10;
+            cbRegion.SelectedIndexChanged += cbRegion_SelectedIndexChanged;
+            // 
+            // label2
+            // 
+            label2.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            label2.AutoSize = true;
+            label2.Location = new System.Drawing.Point(492, 519);
+            label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(49, 15);
+            label2.TabIndex = 11;
+            label2.Text = "REGION";
+            // 
+            // dgWinners
+            // 
+            dgWinners.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            dgWinners.AutoGenerateColumns = true;
+            dgWinners.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgWinners.Location = new System.Drawing.Point(14, 359);
+            dgWinners.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            dgWinners.Name = "dgWinners";
+            dgWinners.Size = new System.Drawing.Size(1148, 147);
+            dgWinners.TabIndex = 3;
+            // 
+            // dgDraw
+            // 
+            dgDraw.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            dgDraw.AutoGenerateColumns = true;
+            dgDraw.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgDraw.Location = new System.Drawing.Point(15, 15);
+            dgDraw.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            dgDraw.Name = "dgDraw";
+            dgDraw.Size = new System.Drawing.Size(1147, 302);
+            dgDraw.TabIndex = 0;
+            // 
+            // btnClear
+            // 
+            btnClear.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btnClear.AutoSize = true;
+            btnClear.BackColor = System.Drawing.Color.LimeGreen;
+            btnClear.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            btnClear.Location = new System.Drawing.Point(332, 513);
+            btnClear.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            btnClear.Name = "btnClear";
+            btnClear.Size = new System.Drawing.Size(153, 27);
+            btnClear.TabIndex = 12;
+            btnClear.Text = "1. CLEAR WINNERS";
+            btnClear.UseVisualStyleBackColor = false;
+            btnClear.Click += btnClear_Click;
+            // 
+            // frmDraw
+            // 
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(1176, 625);
+            Controls.Add(btnClear);
+            Controls.Add(label2);
+            Controls.Add(cbRegion);
+            Controls.Add(btnStart);
+            Controls.Add(lblRandomNumber);
+            Controls.Add(lblProgress);
+            Controls.Add(progressBar1);
+            Controls.Add(btnPrint);
+            Controls.Add(btnPick);
+            Controls.Add(dgWinners);
+            Controls.Add(btnAssign);
+            Controls.Add(label1);
+            Controls.Add(dgDraw);
+            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Name = "frmDraw";
+            Text = "Random Draw";
+            WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            Load += frmDraw_Load;
+            ((System.ComponentModel.ISupportInitialize)dgWinners).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgDraw).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
+
+        }
+
+        #endregion
+
+        private System.Windows.Forms.DataGridView dgDraw;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btnAssign;
+        private System.Windows.Forms.DataGridView dgWinners;
+        private System.Windows.Forms.Button btnPick;
+        private System.Windows.Forms.Button btnPrint;
+        private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.Label lblProgress;
+        private System.Windows.Forms.Label lblRandomNumber;
+        private System.Windows.Forms.Button btnStart;
+        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.ComboBox cbRegion;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Button btnClear;
+    }
+}
+
