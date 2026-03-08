@@ -23,25 +23,27 @@
     <div class="grid-section" style="flex:2">
         <h3>Draw Data</h3>
         <div class="grid-wrapper">
-            @if (drawTable.Columns.Count > 0 && drawTable.Rows.Count > 0)
+            @if (filteredDraw.Count > 0)
             {
                 <table class="data-grid">
                     <thead>
                         <tr>
-                            @foreach (System.Data.DataColumn col in drawTable.Columns)
-                            {
-                                <th>@col.ColumnName</th>
-                            }
+                            <th>ID</th>
+                            <th>@Excel.FullNameColumn</th>
+                            <th>@Excel.EmployeeNumberColumn</th>
+                            <th>Region</th>
+                            <th>RandomID</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (System.Data.DataRow row in drawTable.Rows)
+                        @foreach (var rec in filteredDraw)
                         {
                             <tr>
-                                @foreach (System.Data.DataColumn col in drawTable.Columns)
-                                {
-                                    <td>@(row[col]?.ToString())</td>
-                                }
+                                <td>@rec.Id</td>
+                                <td>@rec.FullName</td>
+                                <td>@rec.EmployeeNumber</td>
+                                <td>@rec.Region</td>
+                                <td>@rec.RandomId</td>
                             </tr>
                         }
                     </tbody>
@@ -58,25 +60,27 @@
     <div class="grid-section" style="flex:1">
         <h3>Winners</h3>
         <div class="grid-wrapper">
-            @if (winnersTable.Columns.Count > 0 && winnersTable.Rows.Count > 0)
+            @if (Excel.Winners.Count > 0)
             {
                 <table class="data-grid">
                     <thead>
                         <tr>
-                            @foreach (System.Data.DataColumn col in winnersTable.Columns)
-                            {
-                                <th>@col.ColumnName</th>
-                            }
+                            <th>Region</th>
+                            <th>ID</th>
+                            <th>@Excel.FullNameColumn</th>
+                            <th>@Excel.EmployeeNumberColumn</th>
+                            <th>RandomID</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (System.Data.DataRow row in winnersTable.Rows)
+                        @foreach (var w in Excel.Winners)
                         {
                             <tr>
-                                @foreach (System.Data.DataColumn col in winnersTable.Columns)
-                                {
-                                    <td>@(row[col]?.ToString())</td>
-                                }
+                                <td>@w.Region</td>
+                                <td>@w.Id</td>
+                                <td>@w.FullName</td>
+                                <td>@w.EmployeeNumber</td>
+                                <td>@w.RandomId</td>
                             </tr>
                         }
                     </tbody>
@@ -126,7 +130,7 @@
         <button class="btn btn-assign" @onclick="AssignRandomNumbers" disabled="@(!Excel.IsLoaded || isAssigning)">2. Assign Random Numbers</button>
         <button class="btn btn-start" @onclick="StartGenerator" disabled="@(!Excel.IsLoaded || isSpinning)">3. Start Generator</button>
         <button class="btn btn-pick" @onclick="PickWinner" disabled="@(!isSpinning)">4. Pick Winner</button>
-        <button class="btn btn-print" @onclick="PrintWinners" disabled="@(winnersTable.Rows.Count == 0)">5. Print Winners</button>
+        <button class="btn btn-print" @onclick="PrintWinners" disabled="@(Excel.Winners.Count == 0)">5. Print Winners</button>
     </div>
 </div>
 
@@ -170,8 +174,7 @@
 
 @code {
     // Data
-    private System.Data.DataTable drawTable = new("Draw");
-    private System.Data.DataTable winnersTable = new("Winners");
+    private List<DrawRecord> filteredDraw = new();
     private List<string> regions = new();
     private string selectedRegion = "";
 
@@ -246,8 +249,6 @@
         await Task.Delay(50);
 
         RefreshDrawGrid();
-        RefreshWinnersGrid();
-
         regions = Excel.GetDistinctRegions();
         selectedRegion = "";
 
@@ -257,14 +258,7 @@
     // ===== Grid Refresh =====
     private void RefreshDrawGrid()
     {
-        drawTable = string.IsNullOrEmpty(selectedRegion)
-            ? Excel.LoadDrawData()
-            : Excel.LoadDrawDataByRegion(selectedRegion);
-    }
-
-    private void RefreshWinnersGrid()
-    {
-        winnersTable = Excel.LoadWinnersData();
+        filteredDraw = Excel.GetDrawData(selectedRegion);
     }
 
     // ===== Region Changed =====
@@ -277,7 +271,6 @@
     private void ClearWinners()
     {
         Excel.ClearWinners();
-        RefreshWinnersGrid();
     }
 
     // ===== 2. Assign Random Numbers =====
@@ -293,7 +286,7 @@
 
         RefreshDrawGrid();
 
-        progressTotal = drawTable.Rows.Count;
+        progressTotal = filteredDraw.Count;
         progressCurrent = 0;
         progressMessage = $"0 of {progressTotal}";
         StateHasChanged();
@@ -303,7 +296,7 @@
 
         try
         {
-            var pairs = Excel.AssignRandomIDs(drawTable);
+            var pairs = Excel.AssignRandomIDs(filteredDraw);
 
             // Animate progress
             foreach (var pair in pairs)
@@ -337,14 +330,14 @@
     // ===== 3. Start Number Generator =====
     private void StartGenerator()
     {
-        if (drawTable.Rows.Count == 0) return;
+        if (filteredDraw.Count == 0) return;
 
         isSpinning = true;
 
         spinTimer?.Dispose();
         spinTimer = new System.Threading.Timer(async _ =>
         {
-            int maxNumber = drawTable.Rows.Count;
+            int maxNumber = filteredDraw.Count;
             if (maxNumber == 0) return;
 
             int currentNumber = rng.Next(maxNumber);
@@ -354,7 +347,7 @@
                 reelDigits[i] = numberString[i].ToString();
 
             await InvokeAsync(StateHasChanged);
-        }, null, 0, 80); // ~12.5 fps
+        }, null, 0, 30); // ~33 fps
     }
 
     // ===== 4. Pick Winner =====
@@ -368,22 +361,26 @@
         string fullNumber = string.Join("", reelDigits).TrimStart('0');
         if (string.IsNullOrEmpty(fullNumber)) fullNumber = "0";
 
-        var matches = drawTable.Select("RandomID='" + fullNumber + "'");
-        if (matches.Length == 0)
+        if (!int.TryParse(fullNumber, out int randomId))
         {
             ShowAlert("Not Found", $"No matching record found for RandomID: {fullNumber}");
             return;
         }
 
-        var dr = matches[0];
-        winnerRegion = dr["Region"]?.ToString() ?? "";
-        winnerId = Convert.ToInt32(dr["ID"]);
-        winnerName = dr[Excel.FullNameColumn]?.ToString() ?? "";
-        winnerEmplNo = dr[Excel.EmployeeNumberColumn]?.ToString() ?? "";
-        winnerRandomId = Convert.ToInt32(fullNumber);
+        var match = filteredDraw.FirstOrDefault(r => r.RandomId == randomId);
+        if (match == null)
+        {
+            ShowAlert("Not Found", $"No matching record found for RandomID: {fullNumber}");
+            return;
+        }
+
+        winnerRegion = match.Region;
+        winnerId = match.Id;
+        winnerName = match.FullName;
+        winnerEmplNo = match.EmployeeNumber;
+        winnerRandomId = randomId;
 
         Excel.InsertWinner(winnerRegion, winnerId, winnerName, winnerEmplNo, winnerRandomId);
-        RefreshWinnersGrid();
 
         showWinnerCard = true;
     }
@@ -391,13 +388,13 @@
     // ===== 5. Print Winners =====
     private async Task PrintWinners()
     {
-        if (winnersTable.Rows.Count == 0)
+        if (Excel.Winners.Count == 0)
         {
             ShowAlert("Print Winners", "No winners to print.");
             return;
         }
 
-        var html = Excel.GenerateWinnersHtml(winnersTable);
+        var html = Excel.GenerateWinnersHtml();
         await JS.InvokeVoidAsync("printHtml", html);
     }
 
