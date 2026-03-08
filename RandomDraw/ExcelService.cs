@@ -1,0 +1,493 @@
+#nullable enable
+using System.Data;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Packaging;
+
+namespace RandomDraw;
+
+/// <summary>
+/// Browser-compatible Excel service that works with in-memory streams
+/// instead of file-system paths. Replaces the WinForms ExcelHelper.
+/// </summary>
+public class ExcelService
+{
+    private byte[]? _workbookBytes;
+    private string? _fileName;
+
+    private const string WinnersSheetName = "Winners";
+
+    // Configurable column names (defaults)
+    public string FullNameColumn { get; set; } = "FullName";
+    public string EmployeeNumberColumn { get; set; } = "Employee_Num";
+
+    public bool IsLoaded => _workbookBytes != null;
+    public string? FileName => _fileName;
+
+    /// <summary>
+    /// Configure column name mappings.
+    /// </summary>
+    public void Configure(string? fullNameColumn, string? employeeNumberColumn)
+    {
+        if (!string.IsNullOrWhiteSpace(fullNameColumn))
+            FullNameColumn = fullNameColumn;
+        if (!string.IsNullOrWhiteSpace(employeeNumberColumn))
+            EmployeeNumberColumn = employeeNumberColumn;
+    }
+
+    /// <summary>
+    /// Loads an Excel file from uploaded bytes. Repairs and validates it.
+    /// Returns null on success or an error message.
+    /// </summary>
+    public string? LoadFromBytes(byte[] bytes, string fileName)
+    {
+        _fileName = fileName;
+
+        // Repair namespace declarations
+        bytes = RepairXlsx(bytes);
+
+        // Validate and prepare (may modify the workbook to add columns/sheets)
+        var (error, prepared) = ValidateAndPrepare(bytes);
+        if (error != null)
+        {
+            _workbookBytes = null;
+            return error;
+        }
+
+        _workbookBytes = prepared;
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the current workbook bytes (for download/export).
+    /// </summary>
+    public byte[]? GetWorkbookBytes() => _workbookBytes;
+
+    /// <summary>
+    /// Loads the draw data into a DataTable.
+    /// </summary>
+    public DataTable LoadDrawData()
+    {
+        if (_workbookBytes == null) return new DataTable("Draw");
+        using var ms = new MemoryStream(_workbookBytes);
+        using var wb = new XLWorkbook(ms);
+        var ws = FindDrawSheet(wb);
+        if (ws == null) return new DataTable("Draw");
+        return ReadSheetToDataTable(ws);
+    }
+
+    /// <summary>
+    /// Loads draw data filtered by region.
+    /// </summary>
+    public DataTable LoadDrawDataByRegion(string region)
+    {
+        var dt = LoadDrawData();
+        var filtered = dt.Clone();
+        foreach (DataRow row in dt.Rows)
+        {
+            var val = row["Region"]?.ToString() ?? "";
+            if (val.Equals(region, StringComparison.OrdinalIgnoreCase))
+                filtered.ImportRow(row);
+        }
+        return filtered;
+    }
+
+    /// <summary>
+    /// Returns distinct non-empty Region values.
+    /// </summary>
+    public List<string> GetDistinctRegions()
+    {
+        var dt = LoadDrawData();
+        var regions = new List<string>();
+        foreach (DataRow row in dt.Rows)
+        {
+            var val = row["Region"]?.ToString() ?? "";
+            if (val != "" && !regions.Contains(val, StringComparer.OrdinalIgnoreCase))
+                regions.Add(val);
+        }
+        return regions;
+    }
+
+    /// <summary>
+    /// Clears all RandomID values.
+    /// </summary>
+    public void ClearRandomIDs()
+    {
+        ModifyWorkbook(wb =>
+        {
+            var ws = FindDrawSheet(wb);
+            if (ws == null) return;
+            int colIdx = FindColumnIndex(ws, "RandomID");
+            if (colIdx < 0) return;
+            var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
+            for (int r = 2; r <= lastRow; r++)
+                ws.Cell(r, colIdx).Value = Blank.Value;
+        });
+    }
+
+    /// <summary>
+    /// Clears RandomID values only for rows matching the given region.
+    /// </summary>
+    public void ClearRandomIDsByRegion(string region)
+    {
+        ModifyWorkbook(wb =>
+        {
+            var ws = FindDrawSheet(wb);
+            if (ws == null) return;
+            int randomIdCol = FindColumnIndex(ws, "RandomID");
+            int regionCol = FindColumnIndex(ws, "Region");
+            if (randomIdCol < 0 || regionCol < 0) return;
+            var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
+            for (int r = 2; r <= lastRow; r++)
+            {
+                var val = ws.Cell(r, regionCol).GetString().Trim();
+                if (val.Equals(region, StringComparison.OrdinalIgnoreCase))
+                    ws.Cell(r, randomIdCol).Value = Blank.Value;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Assigns random IDs to all rows (or filtered by region).
+    /// Returns the list of (Id, RandomId) pairs that were assigned.
+    /// </summary>
+    public List<(int Id, int Rnd)> AssignRandomIDs(DataTable drawTable)
+    {
+        // Build randomized integer list
+        var guids = new Dictionary<string, int>();
+        int k = 0;
+        for (int j = 0; j < drawTable.Rows.Count; j++)
+            guids.Add(Guid.NewGuid().ToString(), k++);
+
+        var randomInts = guids.OrderBy(c => c.Key).Select(c => c.Value).ToList();
+
+        var pairs = new List<(int Id, int Rnd)>();
+        k = 0;
+        foreach (DataRow dr in drawTable.Rows)
+        {
+            int id = Convert.ToInt32(dr["ID"]);
+            int rnd = randomInts[k++];
+            pairs.Add((id, rnd));
+        }
+
+        // Write all to workbook at once
+        ModifyWorkbook(wb =>
+        {
+            var ws = FindDrawSheet(wb)!;
+            int idCol = FindColumnIndex(ws, "ID");
+            int randomIdCol = FindColumnIndex(ws, "RandomID");
+            if (idCol < 0 || randomIdCol < 0) return;
+
+            foreach (var pair in pairs)
+            {
+                var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
+                for (int r = 2; r <= lastRow; r++)
+                {
+                    if (ws.Cell(r, idCol).GetDouble() == pair.Id)
+                    {
+                        ws.Cell(r, randomIdCol).Value = pair.Rnd;
+                        break;
+                    }
+                }
+            }
+        });
+
+        return pairs;
+    }
+
+    /// <summary>
+    /// Loads the Winners sheet into a DataTable.
+    /// </summary>
+    public DataTable LoadWinnersData()
+    {
+        if (_workbookBytes == null)
+        {
+            var dt = new DataTable("Winners");
+            dt.Columns.Add("Region", typeof(string));
+            dt.Columns.Add("ID", typeof(int));
+            dt.Columns.Add(FullNameColumn, typeof(string));
+            dt.Columns.Add(EmployeeNumberColumn, typeof(string));
+            dt.Columns.Add("RandomID", typeof(int));
+            return dt;
+        }
+
+        using var ms = new MemoryStream(_workbookBytes);
+        using var wb = new XLWorkbook(ms);
+        var ws = wb.Worksheets.FirstOrDefault(s =>
+            s.Name.Equals(WinnersSheetName, StringComparison.OrdinalIgnoreCase));
+        if (ws == null)
+        {
+            var dt = new DataTable("Winners");
+            dt.Columns.Add("Region", typeof(string));
+            dt.Columns.Add("ID", typeof(int));
+            dt.Columns.Add(FullNameColumn, typeof(string));
+            dt.Columns.Add(EmployeeNumberColumn, typeof(string));
+            dt.Columns.Add("RandomID", typeof(int));
+            return dt;
+        }
+        return ReadSheetToDataTable(ws);
+    }
+
+    /// <summary>
+    /// Inserts a winner row into the Winners sheet.
+    /// </summary>
+    public void InsertWinner(string region, int id, string fullName, string emplNo, int randomId)
+    {
+        ModifyWorkbook(wb =>
+        {
+            var ws = wb.Worksheets.First(s =>
+                s.Name.Equals(WinnersSheetName, StringComparison.OrdinalIgnoreCase));
+            var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
+            int newRow = lastRow + 1;
+            ws.Cell(newRow, 1).Value = region;
+            ws.Cell(newRow, 2).Value = id;
+            ws.Cell(newRow, 3).Value = fullName;
+            ws.Cell(newRow, 4).Value = emplNo;
+            ws.Cell(newRow, 5).Value = randomId;
+        });
+    }
+
+    /// <summary>
+    /// Clears all winner rows (keeps header).
+    /// </summary>
+    public void ClearWinners()
+    {
+        ModifyWorkbook(wb =>
+        {
+            var ws = wb.Worksheets.FirstOrDefault(s =>
+                s.Name.Equals(WinnersSheetName, StringComparison.OrdinalIgnoreCase));
+            if (ws == null) return;
+            var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
+            if (lastRow > 1)
+                ws.Rows(2, lastRow).Delete();
+        });
+    }
+
+    /// <summary>
+    /// Generates an HTML report of winners for printing.
+    /// </summary>
+    public string GenerateWinnersHtml(DataTable winnersTable)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("<!DOCTYPE html>");
+        sb.AppendLine("<html><head><meta charset='utf-8'>");
+        sb.AppendLine("<title>Random Draw - Winners</title>");
+        sb.AppendLine("<style>");
+        sb.AppendLine("  body { font-family: Arial, sans-serif; margin: 40px; }");
+        sb.AppendLine("  h1 { color: #333; }");
+        sb.AppendLine("  table { border-collapse: collapse; width: 100%; }");
+        sb.AppendLine("  th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }");
+        sb.AppendLine("  th { background-color: #4CAF50; color: white; }");
+        sb.AppendLine("  tr:nth-child(even) { background-color: #f2f2f2; }");
+        sb.AppendLine("  @media print { body { margin: 20px; } }");
+        sb.AppendLine("</style>");
+        sb.AppendLine("</head><body>");
+        sb.AppendLine("<h1>Random Draw - Winners</h1>");
+        sb.AppendLine("<table>");
+
+        sb.AppendLine("<tr>");
+        foreach (DataColumn col in winnersTable.Columns)
+            sb.AppendLine($"  <th>{System.Net.WebUtility.HtmlEncode(col.ColumnName)}</th>");
+        sb.AppendLine("</tr>");
+
+        foreach (DataRow row in winnersTable.Rows)
+        {
+            sb.AppendLine("<tr>");
+            foreach (DataColumn col in winnersTable.Columns)
+            {
+                var value = row[col]?.ToString() ?? "";
+                sb.AppendLine($"  <td>{System.Net.WebUtility.HtmlEncode(value)}</td>");
+            }
+            sb.AppendLine("</tr>");
+        }
+
+        sb.AppendLine("</table>");
+        sb.AppendLine("</body></html>");
+        return sb.ToString();
+    }
+
+    // ===== Private helpers =====
+
+    private IXLWorksheet? FindDrawSheet(XLWorkbook wb)
+    {
+        return wb.Worksheets.FirstOrDefault(s =>
+            s.Visibility == XLWorksheetVisibility.Visible &&
+            !s.Name.Equals(WinnersSheetName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string[] RequiredColumns => new[] { FullNameColumn, EmployeeNumberColumn };
+    private static readonly string[] OptionalColumns = { "Region" };
+    private static readonly string[] ManagedColumns = { "ID", "RandomID" };
+
+    private (string? Error, byte[] Bytes) ValidateAndPrepare(byte[] bytes)
+    {
+        using var ms = new MemoryStream(bytes);
+        using var wb = new XLWorkbook(ms);
+
+        var ws = FindDrawSheet(wb);
+        if (ws == null)
+            return ("No visible data sheet found in the workbook.", bytes);
+
+        if (ws.LastRowUsed() == null)
+            return ($"Sheet '{ws.Name}' is empty.", bytes);
+
+        var headerRow = ws.Row(1);
+        var headers = new List<string>();
+        for (int c = 1; c <= ws.LastColumnUsed()!.ColumnNumber(); c++)
+            headers.Add(headerRow.Cell(c).GetString().Trim());
+
+        foreach (var col in RequiredColumns)
+        {
+            if (!headers.Any(h => h.Equals(col, StringComparison.OrdinalIgnoreCase)))
+                return ($"Required column '{col}' not found in sheet '{ws.Name}'.", bytes);
+        }
+
+        bool changed = false;
+
+        foreach (var col in OptionalColumns)
+        {
+            if (!headers.Any(h => h.Equals(col, StringComparison.OrdinalIgnoreCase)))
+            {
+                int nextCol = headers.Count + 1;
+                ws.Cell(1, nextCol).Value = col;
+                headers.Add(col);
+                changed = true;
+            }
+        }
+
+        foreach (var col in ManagedColumns)
+        {
+            if (!headers.Any(h => h.Equals(col, StringComparison.OrdinalIgnoreCase)))
+            {
+                int nextCol = headers.Count + 1;
+                ws.Cell(1, nextCol).Value = col;
+                headers.Add(col);
+
+                if (col.Equals("ID", StringComparison.OrdinalIgnoreCase))
+                {
+                    var lastRow = ws.LastRowUsed()!.RowNumber();
+                    for (int r = 2; r <= lastRow; r++)
+                        ws.Cell(r, nextCol).Value = r - 1;
+                }
+                changed = true;
+            }
+        }
+
+        int idColIdx = headers.FindIndex(h => h.Equals("ID", StringComparison.OrdinalIgnoreCase)) + 1;
+        if (idColIdx > 0)
+        {
+            var lastRow = ws.LastRowUsed()!.RowNumber();
+            for (int r = 2; r <= lastRow; r++)
+            {
+                if (ws.Cell(r, idColIdx).IsEmpty())
+                {
+                    ws.Cell(r, idColIdx).Value = r - 1;
+                    changed = true;
+                }
+            }
+        }
+
+        if (!wb.Worksheets.Any(s => s.Name.Equals(WinnersSheetName, StringComparison.OrdinalIgnoreCase)))
+        {
+            var winnersWs = wb.Worksheets.Add(WinnersSheetName);
+            winnersWs.Cell(1, 1).Value = "Region";
+            winnersWs.Cell(1, 2).Value = "ID";
+            winnersWs.Cell(1, 3).Value = FullNameColumn;
+            winnersWs.Cell(1, 4).Value = EmployeeNumberColumn;
+            winnersWs.Cell(1, 5).Value = "RandomID";
+            changed = true;
+        }
+        else
+        {
+            var winnersWs = wb.Worksheets.First(s =>
+                s.Name.Equals(WinnersSheetName, StringComparison.OrdinalIgnoreCase));
+            var lastWinCol = winnersWs.LastColumnUsed()?.ColumnNumber() ?? 0;
+            bool hasRandomId = false;
+            for (int c = 1; c <= lastWinCol; c++)
+            {
+                if (winnersWs.Cell(1, c).GetString().Trim()
+                    .Equals("RandomID", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasRandomId = true;
+                    break;
+                }
+            }
+            if (!hasRandomId)
+            {
+                winnersWs.Cell(1, lastWinCol + 1).Value = "RandomID";
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            using var outMs = new MemoryStream();
+            wb.SaveAs(outMs);
+            return (null, outMs.ToArray());
+        }
+
+        return (null, bytes);
+    }
+
+    private void ModifyWorkbook(Action<XLWorkbook> action)
+    {
+        if (_workbookBytes == null) return;
+        using var ms = new MemoryStream(_workbookBytes);
+        using var wb = new XLWorkbook(ms);
+        action(wb);
+        using var outMs = new MemoryStream();
+        wb.SaveAs(outMs);
+        _workbookBytes = outMs.ToArray();
+    }
+
+    private static byte[] RepairXlsx(byte[] bytes)
+    {
+        using var ms = new MemoryStream();
+        ms.Write(bytes, 0, bytes.Length);
+        ms.Position = 0;
+        using (var doc = SpreadsheetDocument.Open(ms, true))
+        {
+            doc.Save();
+        }
+        return ms.ToArray();
+    }
+
+    private static int FindColumnIndex(IXLWorksheet ws, string columnName)
+    {
+        var lastCol = ws.LastColumnUsed()?.ColumnNumber() ?? 0;
+        for (int c = 1; c <= lastCol; c++)
+        {
+            if (ws.Cell(1, c).GetString().Trim()
+                .Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                return c;
+        }
+        return -1;
+    }
+
+    private static DataTable ReadSheetToDataTable(IXLWorksheet ws)
+    {
+        var dt = new DataTable(ws.Name);
+        var lastColUsed = ws.LastColumnUsed();
+        var lastRowUsed = ws.LastRowUsed();
+        if (lastColUsed == null || lastRowUsed == null) return dt;
+
+        int colCount = lastColUsed.ColumnNumber();
+        int rowCount = lastRowUsed.RowNumber();
+
+        for (int c = 1; c <= colCount; c++)
+        {
+            string header = ws.Cell(1, c).GetString().Trim();
+            if (string.IsNullOrEmpty(header)) header = $"Column{c}";
+            dt.Columns.Add(header, typeof(string));
+        }
+
+        for (int r = 2; r <= rowCount; r++)
+        {
+            var row = dt.NewRow();
+            for (int c = 1; c <= colCount; c++)
+                row[c - 1] = ws.Cell(r, c).GetString();
+            dt.Rows.Add(row);
+        }
+
+        return dt;
+    }
+}
