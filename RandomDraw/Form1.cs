@@ -1,13 +1,10 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using System.Data.OleDb;
-// removed unused threading/usings after switching to sequential processing
 
 namespace RandomDraw
 {
@@ -18,19 +15,23 @@ namespace RandomDraw
         private Label[] reelLabels = new Label[5];
         private const int reelHeight = 60;
         private const int digitHeight = 50;
-        
+
+        // In-memory DataTables backing the grids
+        private DataTable drawTable = new DataTable("Draw");
+        private DataTable winnersTable = new DataTable("Winners");
+
         public frmDraw()
         {
             InitializeComponent();
-            
+
             // Hide the original label and create 5 reel labels
             lblRandomNumber.Visible = false;
-            
+
             // Create 5 reel labels anchored to bottom left
             int startX = 20; // Left margin from form edge
             int bottomMargin = 20; // Margin from bottom
             int spacing = 50;
-            
+
             for (int i = 0; i < 5; i++)
             {
                 reelLabels[i] = new Label
@@ -49,7 +50,7 @@ namespace RandomDraw
                 this.Controls.Add(reelLabels[i]);
                 reelLabels[i].BringToFront();
             }
-            
+
             // Position reels at bottom of form after form is sized
             this.Load += (s, e) => {
                 int startY = this.ClientSize.Height - reelHeight - bottomMargin;
@@ -60,29 +61,31 @@ namespace RandomDraw
             };
         }
 
-
-
         private void frmDraw_Load(object sender, EventArgs e)
         {
-            this.drawTableAdapter1.Fill(this.drawDataSet1.Draw);
-            this.winnersTableAdapter1.Fill(this.drawDataSet1.Winners);
-
-            OleDbConnection cn = new OleDbConnection();
-            cn.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["RandomDraw.Properties.Settings.drawConnectionString1"].ConnectionString;
-            cn.Open();
-            OleDbCommand cmd = cn.CreateCommand();
-            cmd.CommandText = "select distinct region from draw";
-            OleDbDataReader rdr = cmd.ExecuteReader();
-            while (rdr.Read())
+            // Validate and prepare the Excel file
+            string? error = ExcelHelper.ValidateAndPrepare();
+            if (error != null)
             {
-                cbRegion.Items.Add(rdr[0].ToString());
+                MessageBox.Show(error, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
 
-            cn.Close();
-            
+            // Load draw data into dgDraw (dynamic columns)
+            RefreshDrawGrid();
+
+            // Load winners data into dgWinners
+            RefreshWinnersGrid();
+
+            // Populate region combo box
+            foreach (var region in ExcelHelper.GetDistinctRegions())
+            {
+                cbRegion.Items.Add(region);
+            }
+
             // Disable pick winner button at startup
             btnPick.Enabled = false;
-            
+
             // Initialize all reels to 0
             for (int i = 0; i < 5; i++)
             {
@@ -90,27 +93,49 @@ namespace RandomDraw
             }
         }
 
+        private void RefreshDrawGrid()
+        {
+            drawTable = cbRegion.Text == ""
+                ? ExcelHelper.LoadDrawData()
+                : ExcelHelper.LoadDrawDataByRegion(cbRegion.Text);
+
+            dgDraw.DataSource = null;
+            dgDraw.Columns.Clear();
+            dgDraw.AutoGenerateColumns = true;
+            dgDraw.DataSource = drawTable;
+        }
+
+        private void RefreshWinnersGrid()
+        {
+            winnersTable = ExcelHelper.LoadWinnersData();
+            dgWinners.DataSource = null;
+            dgWinners.Columns.Clear();
+            dgWinners.AutoGenerateColumns = true;
+            dgWinners.DataSource = winnersTable;
+        }
+
         private void btnAssign_Click(object sender, EventArgs e)
         {
-            List<Int32> lst = new List<Int32>();
-
             //Clear old values
             if (cbRegion.Text == "")
             {
-                this.drawTableAdapter1.ClearRandomIDs();
+                ExcelHelper.ClearRandomIDs();
             }
             else
             {
-                this.drawTableAdapter1.ClearRandomIDsByRegion(cbRegion.Text);
+                ExcelHelper.ClearRandomIDsByRegion(cbRegion.Text);
             }
+
+            // Reload after clearing
+            RefreshDrawGrid();
 
             // Build randomized integer list (preserve original approach)
             var guids = new Dictionary<string, int>();
             var randomInts = new List<int>();
             int k = 0;
-            for (int j = 0; j < drawDataSet1.Draw.Rows.Count; j++)
+            for (int j = 0; j < drawTable.Rows.Count; j++)
             {
-                guids.Add(System.Guid.NewGuid().ToString(), k++);
+                guids.Add(Guid.NewGuid().ToString(), k++);
             }
             foreach (var kvp in guids.OrderBy(c => c.Key))
             {
@@ -120,9 +145,9 @@ namespace RandomDraw
             // Build list of (ID, RandomID) pairs to update
             var idRndPairs = new List<(int Id, int Rnd)>();
             k = 0;
-            foreach (DataRow dr in this.drawDataSet1.Draw.Rows)
+            foreach (DataRow dr in drawTable.Rows)
             {
-                int id = (Int32)dr["ID"];
+                int id = Convert.ToInt32(dr["ID"]);
                 int rnd = randomInts[k++];
                 idRndPairs.Add((id, rnd));
             }
@@ -132,40 +157,30 @@ namespace RandomDraw
             this.progressBar1.Value = 0;
             this.lblProgress.Text = "0 of " + idRndPairs.Count;
 
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["RandomDraw.Properties.Settings.drawConnectionString1"].ConnectionString;
-
             int completed = 0;
 
             try
             {
-                using (var cn = new OleDbConnection(connectionString))
+                using var wb = ExcelHelper.OpenWorkbook();
+                var ws = ExcelHelper.GetDrawSheet(wb);
+
+                // Sequential update
+                foreach (var pair in idRndPairs)
                 {
-                    cn.Open();
+                    ExcelHelper.UpdateRandomID(pair.Id, pair.Rnd, ws);
 
-                    // Sequential update over the shared connection
-                    foreach (var pair in idRndPairs)
+                    completed++;
+
+                    // Update UI directly (we are on the UI thread)
+                    if (completed <= this.progressBar1.Maximum)
                     {
-                        using (var cmd = cn.CreateCommand())
-                        {
-                            cmd.CommandText = "UPDATE Draw SET RandomID = ? WHERE ID = ?";
-                            cmd.Parameters.AddWithValue("?", pair.Rnd);
-                            cmd.Parameters.AddWithValue("?", pair.Id);
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        lst.Add(pair.Rnd);
-
-                        completed++;
-
-                        // Update UI directly (we are on the UI thread)
-                        if (completed <= this.progressBar1.Maximum)
-                        {
-                            this.progressBar1.Value = completed;
-                        }
-                        this.lblProgress.Text = string.Format("Record {0} of {1}", completed, idRndPairs.Count);
-                        Application.DoEvents();
+                        this.progressBar1.Value = completed;
                     }
+                    this.lblProgress.Text = string.Format("Record {0} of {1}", completed, idRndPairs.Count);
+                    Application.DoEvents();
                 }
+
+                wb.Save();
             }
             catch (Exception ex)
             {
@@ -174,14 +189,7 @@ namespace RandomDraw
 
             //Update table (back on UI thread)
             this.lblProgress.Text = "UPDATING TABLE";
-            if (cbRegion.Text == "")
-            {
-                this.drawTableAdapter1.Fill(this.drawDataSet1.Draw);
-            }
-            else
-            {
-                this.drawTableAdapter1.FillByRegion(this.drawDataSet1.Draw, cbRegion.Text);
-            }
+            RefreshDrawGrid();
 
             this.lblProgress.Text = "DONE";
         }
@@ -189,21 +197,36 @@ namespace RandomDraw
         private void btnPick_Click(object sender, EventArgs e)
         {
             this.timer1.Stop();
-            
+
             // Get the number from all 5 reels
-            string fullNumber = string.Join("", reelLabels.Select(l => l.Text));
-            
-            drawDataSet.DrawRow dr = this.drawDataSet1.Draw.Select("RandomID=" + fullNumber).First() as drawDataSet.DrawRow;
-            string region = dr.IsRegionNull() ? "" : dr.Region;
-            this.winnersTableAdapter1.InsertWinner(dr.ID, dr.NameSurname, dr.EmplNo.ToString(), dr.RandomID, region);
-            this.winnersTableAdapter1.Fill(this.drawDataSet1.Winners);
-            
+            string fullNumber = string.Join("", reelLabels.Select(l => l.Text)).TrimStart('0');
+
+            // Find the matching row in the in-memory DataTable
+            DataRow[] matches = drawTable.Select("RandomID='" + fullNumber + "'");
+            if (matches.Length == 0)
+            {
+                MessageBox.Show("No matching record found for RandomID: " + fullNumber, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DataRow dr = matches[0];
+            string region = dr["Region"]?.ToString() ?? "";
+            int id = Convert.ToInt32(dr["ID"]);
+            string nameSurname = dr["NameSurname"]?.ToString() ?? "";
+            string emplNo = dr["EmplNo"]?.ToString() ?? "";
+
+            // Insert winner into the Excel Winners sheet
+            ExcelHelper.InsertWinner(region, id, nameSurname, emplNo);
+
+            // Refresh winners grid
+            RefreshWinnersGrid();
+
             // Reset all reels to normal color
             for (int i = 0; i < 5; i++)
             {
                 reelLabels[i].ForeColor = Color.Black;
             }
-            
+
             // Disable pick button after picking a winner
             btnPick.Enabled = false;
         }
@@ -211,38 +234,39 @@ namespace RandomDraw
         private void btnStart_Click(object sender, EventArgs e)
         {
             this.timer1.Start();
-            
+
             // Reset all reel positions
             for (int i = 0; i < 5; i++)
             {
                 reelPositions[i] = 0;
             }
-            
+
             // Enable pick button when starting number generator
             btnPick.Enabled = true;
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            int maxNumber = this.drawDataSet1.Draw.Rows.Count;
-            
+            int maxNumber = drawTable.Rows.Count;
+            if (maxNumber == 0) return;
+
             // Generate random number and pad to 5 digits
             int currentNumber = new Random().Next(maxNumber);
             string numberString = currentNumber.ToString().PadLeft(5, '0');
-            
+
             // Update each reel independently
             for (int i = 0; i < 5; i++)
             {
                 // Update reel position with its specific speed
                 reelPositions[i] += reelSpeeds[i];
-                
+
                 // Calculate offset for smooth scrolling effect
                 int offset = reelPositions[i] % digitHeight;
                 float offsetRatio = (float)offset / digitHeight;
-                
+
                 // Set the digit for this reel
                 reelLabels[i].Text = numberString[i].ToString();
-                
+
                 // Add visual feedback with color change during spin
                 // Each reel has slightly different timing for variety
                 int colorPhase = (reelPositions[i] + (i * 20)) % 120;
@@ -265,15 +289,14 @@ namespace RandomDraw
 
         private void cbRegion_SelectedIndexChanged(object sender, EventArgs e)
         {
-            this.drawDataSet1.Draw.Clear();
-            this.drawTableAdapter1.FillByRegion(this.drawDataSet1.Draw, cbRegion.Text);
+            RefreshDrawGrid();
         }
 
         private void btnClear_Click(object sender, EventArgs e)
         {
             //Delete previous winners
-            this.winnersTableAdapter1.DeletePreviousWinners();
-            this.winnersTableAdapter1.Fill(this.drawDataSet1.Winners);
+            ExcelHelper.ClearWinners();
+            RefreshWinnersGrid();
         }
 
 

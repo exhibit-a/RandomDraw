@@ -13,28 +13,6 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Update="drawDataSet.cs">
-      <DependentUpon>drawDataSet.xsd</DependentUpon>
-    </Compile>
-    <None Update="drawDataSet.xsc">
-      <DependentUpon>drawDataSet.xsd</DependentUpon>
-    </None>
-    <None Update="drawDataSet.xsd">
-      <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>drawDataSet.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </None>
-    <None Update="drawDataSet.xss">
-      <DependentUpon>drawDataSet.xsd</DependentUpon>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="draw.accdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.3" />
-    <PackageReference Include="System.Data.OleDb" Version="10.0.3" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
   </ItemGroup>
 </Project>
