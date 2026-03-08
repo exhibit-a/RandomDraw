@@ -13,9 +13,51 @@ namespace RandomDraw
 {
     public partial class frmDraw : Form
     {
+        private int[] reelPositions = new int[5];
+        private int[] reelSpeeds = { 20, 18, 16, 14, 12 }; // Different speeds for each reel
+        private Label[] reelLabels = new Label[5];
+        private const int reelHeight = 60;
+        private const int digitHeight = 50;
+        
         public frmDraw()
         {
             InitializeComponent();
+            
+            // Hide the original label and create 5 reel labels
+            lblRandomNumber.Visible = false;
+            
+            // Create 5 reel labels anchored to bottom left
+            int startX = 20; // Left margin from form edge
+            int bottomMargin = 20; // Margin from bottom
+            int spacing = 50;
+            
+            for (int i = 0; i < 5; i++)
+            {
+                reelLabels[i] = new Label
+                {
+                    Font = new Font("Arial", 32, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    AutoSize = false,
+                    Width = 45,
+                    Height = reelHeight,
+                    Left = startX + (i * spacing),
+                    BackColor = Color.White,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    Text = "0",
+                    Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                };
+                this.Controls.Add(reelLabels[i]);
+                reelLabels[i].BringToFront();
+            }
+            
+            // Position reels at bottom of form after form is sized
+            this.Load += (s, e) => {
+                int startY = this.ClientSize.Height - reelHeight - bottomMargin;
+                for (int i = 0; i < 5; i++)
+                {
+                    reelLabels[i].Top = startY;
+                }
+            };
         }
 
 
@@ -40,6 +82,12 @@ namespace RandomDraw
             
             // Disable pick winner button at startup
             btnPick.Enabled = false;
+            
+            // Initialize all reels to 0
+            for (int i = 0; i < 5; i++)
+            {
+                reelLabels[i].Text = "0";
+            }
         }
 
         private void btnAssign_Click(object sender, EventArgs e)
@@ -115,7 +163,6 @@ namespace RandomDraw
                             this.progressBar1.Value = completed;
                         }
                         this.lblProgress.Text = string.Format("Record {0} of {1}", completed, idRndPairs.Count);
-                        this.lblRandomNumber.Text = pair.Rnd.ToString();
                         Application.DoEvents();
                     }
                 }
@@ -142,10 +189,20 @@ namespace RandomDraw
         private void btnPick_Click(object sender, EventArgs e)
         {
             this.timer1.Stop();
-            drawDataSet.DrawRow dr = this.drawDataSet1.Draw.Select("RandomID=" + lblRandomNumber.Text).First() as drawDataSet.DrawRow;
+            
+            // Get the number from all 5 reels
+            string fullNumber = string.Join("", reelLabels.Select(l => l.Text));
+            
+            drawDataSet.DrawRow dr = this.drawDataSet1.Draw.Select("RandomID=" + fullNumber).First() as drawDataSet.DrawRow;
             string region = dr.IsRegionNull() ? "" : dr.Region;
             this.winnersTableAdapter1.InsertWinner(dr.ID, dr.NameSurname, dr.EmplNo.ToString(), dr.RandomID, region);
             this.winnersTableAdapter1.Fill(this.drawDataSet1.Winners);
+            
+            // Reset all reels to normal color
+            for (int i = 0; i < 5; i++)
+            {
+                reelLabels[i].ForeColor = Color.Black;
+            }
             
             // Disable pick button after picking a winner
             btnPick.Enabled = false;
@@ -155,13 +212,50 @@ namespace RandomDraw
         {
             this.timer1.Start();
             
+            // Reset all reel positions
+            for (int i = 0; i < 5; i++)
+            {
+                reelPositions[i] = 0;
+            }
+            
             // Enable pick button when starting number generator
             btnPick.Enabled = true;
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            this.lblRandomNumber.Text = new Random().Next(this.drawDataSet1.Draw.Rows.Count).ToString();
+            int maxNumber = this.drawDataSet1.Draw.Rows.Count;
+            
+            // Generate random number and pad to 5 digits
+            int currentNumber = new Random().Next(maxNumber);
+            string numberString = currentNumber.ToString().PadLeft(5, '0');
+            
+            // Update each reel independently
+            for (int i = 0; i < 5; i++)
+            {
+                // Update reel position with its specific speed
+                reelPositions[i] += reelSpeeds[i];
+                
+                // Calculate offset for smooth scrolling effect
+                int offset = reelPositions[i] % digitHeight;
+                float offsetRatio = (float)offset / digitHeight;
+                
+                // Set the digit for this reel
+                reelLabels[i].Text = numberString[i].ToString();
+                
+                // Add visual feedback with color change during spin
+                // Each reel has slightly different timing for variety
+                int colorPhase = (reelPositions[i] + (i * 20)) % 120;
+                if (colorPhase < 60)
+                {
+                    int colorValue = 100 + (int)(offsetRatio * 155);
+                    reelLabels[i].ForeColor = Color.FromArgb(colorValue, colorValue, 0);
+                }
+                else
+                {
+                    reelLabels[i].ForeColor = Color.Black;
+                }
+            }
         }
 
         private void btnPrint_Click(object sender, EventArgs e)
