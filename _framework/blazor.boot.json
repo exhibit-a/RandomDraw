@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "RandomDraw",
   "resources": {
-    "hash": "sha256-7NruI7t4Gjx3EuClkG9Vpza0cK2SclzxvK9DygjWIu4=",
+    "hash": "sha256-dFFhd9INH09NWdytLfVEuR3cnOrYkBgoUCXlM9FbHkg=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-4g0GzvOXSwZvTLca4PrWJkoeltz+V9IF/hEFDcnVros="
     },
@@ -85,7 +85,7 @@
       "System.wasm": "sha256-YSihFa+YInKtLQNBZCK8pNPmas5a97BeIhBK9Cl2Qx8=",
       "netstandard.wasm": "sha256-XqWMJlmFZfXDhpVZImoKsTm4bQ1QUjZ+DX+FrAPPuEU=",
       "System.Private.CoreLib.wasm": "sha256-14RcD5/xNhlOxZTvu30rlO67C0FC+dAHgxUtIIBKlbU=",
-      "RandomDraw.wasm": "sha256-+dXaI/I7FySKHoWzFS4EtBqsAADQFqdhihpGKfnP+DM="
+      "RandomDraw.wasm": "sha256-fvrGlnqiA0sg2jMKWFirMl+iYuoIe5UC6bbMlOvyF2I="
     }
   },
   "cacheBootResources": true,
