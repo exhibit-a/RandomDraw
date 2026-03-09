@@ -44,6 +44,7 @@ public class ExcelService
     // In-memory data
     public List<DrawRecord> DrawData { get; private set; } = new();
     public List<WinnerRecord> Winners { get; private set; } = new();
+    public IReadOnlyList<string> ExtraColumnHeaders => _extraColumnHeaders;
 
     public bool IsLoaded => DrawData.Count > 0;
     public string? FileName => _fileName;

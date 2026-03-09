@@ -32,6 +32,10 @@
                             <th>@Excel.FullNameColumn</th>
                             <th>@Excel.EmployeeNumberColumn</th>
                             <th>Region</th>
+                            @foreach (var header in Excel.ExtraColumnHeaders)
+                            {
+                                <th>@header</th>
+                            }
                             <th>RandomID</th>
                         </tr>
                     </thead>
@@ -43,6 +47,10 @@
                                 <td>@rec.FullName</td>
                                 <td>@rec.EmployeeNumber</td>
                                 <td>@rec.Region</td>
+                                @foreach (var header in Excel.ExtraColumnHeaders)
+                                {
+                                    <td>@rec.ExtraColumns.GetValueOrDefault(header, "")</td>
+                                }
                                 <td>@rec.RandomId</td>
                             </tr>
                         }
